@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Materials Science ML Comparison Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        glass: {
+                            DEFAULT: 'rgba(15, 23, 42, 0.65)',
+                            light: 'rgba(30, 41, 59, 0.45)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030712;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(71, 85, 105, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.6);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glow-indigo {
+            box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25);
+        }
+        .glow-emerald {
+            box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="glass-card sticky top-0 z-40 w-full border-b border-slate-800/80 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 via-blue-500 to-emerald-400 p-0.5 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <div class="h-full w-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+                    <i data-lucide="atom" class="h-5 w-5 text-indigo-400 animate-spin-slow"></i>
+                </div>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-slate-50 via-slate-100 to-indigo-300 bg-clip-text text-transparent">
+                    MaterialCompare <span class="text-xs font-normal text-indigo-400 px-1.5 py-0.5 rounded-full bg-indigo-950/60 border border-indigo-900/50">ML Sandbox</span>
+                </h1>
+                <p class="text-xs text-slate-400">GA-NN vs. XGBoost vs. LightGBM Performance Evaluator</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button id="download_report_btn" class="hidden px-4 py-2 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-lg flex items-center gap-2 transition-all">
+                <i data-lucide="download" class="h-3.5 w-3.5"></i> Download Report (CSV)
+            </button>
+            <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-medium text-slate-400">System Ready</span>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 w-full max-w-7xl mx-auto p-6 flex flex-col gap-6">
+
+        <!-- Top Configuration Row -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Dataset Upload & Setup -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between col-span-2 relative overflow-hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="file-spreadsheet" class="h-5 w-5 text-indigo-400"></i>
+                        <h2 class="font-semibold text-slate-200">1. Load Dataset</h2>
+                    </div>
+                    <button id="load_sample_btn" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300 underline transition-all">
+                        Load Sample Perovskite CSV
+                    </button>
+                </div>
+                
+                <div id="drop_zone" class="border-2 border-dashed border-slate-800 hover:border-indigo-500/50 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-950/20 group">
+                    <input type="file" id="csv_file_input" accept=".csv" class="hidden" />
+                    <i data-lucide="upload-cloud" class="h-10 w-10 text-slate-500 group-hover:text-indigo-400 mb-3 transition-colors"></i>
+                    <p class="text-sm font-medium text-slate-300 mb-1 group-hover:text-slate-200">Drag and drop your CSV file here</p>
+                    <p class="text-xs text-slate-500">or click to browse your local directory</p>
+                </div>
+                
+                <!-- File Stats Info Box (Hidden by default) -->
+                <div id="file_info_box" class="hidden mt-4 p-3 bg-slate-900/60 border border-slate-800 rounded-lg flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <i data-lucide="check-circle" class="h-4.5 w-4.5 text-emerald-400"></i>
+                        <div>
+                            <p id="info_filename" class="text-xs font-medium text-slate-300"></p>
+                            <p id="info_stats" class="text-[10px] text-slate-500"></p>
+                        </div>
+                    </div>
+                    <button id="reset_file_btn" class="p-1 hover:text-rose-400 rounded transition-colors">
+                        <i data-lucide="x" class="h-4 w-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Parameters & Run Panel -->
+            <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+                <div class="flex items-center gap-2 mb-4">
+                    <i data-lucide="settings" class="h-5 w-5 text-indigo-400"></i>
+                    <h2 class="font-semibold text-slate-200">2. Configure Task</h2>
+                </div>
+                
+                <form id="config_form" class="flex flex-col gap-4 flex-1 justify-center">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Target Column</label>
+                        <select id="target_column_select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none" disabled>
+                            <option value="">Upload CSV first...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Task Type</label>
+                            <select id="task_type_select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                                <option value="classification">Classification</option>
+                                <option value="regression">Regression</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Oversample Imbalance</label>
+                            <select id="imbalance_select" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-500 focus:outline-none">
+                                <option value="true">Enabled (ROS)</option>
+                                <option value="false">Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="run_models_btn" class="w-full mt-2 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-medium text-sm rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all" disabled>
+                        <i data-lucide="play" class="h-4 w-4"></i> Run Model Comparison
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Live Progress Status Bar (Hidden until run) -->
+        <section id="progress_section" class="hidden glass-card rounded-2xl p-6 glow-indigo">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="h-2 w-2 rounded-full bg-indigo-500 animate-ping"></div>
+                    <p id="progress_message" class="text-sm font-medium text-indigo-300">Initiating training models...</p>
+                </div>
+                <span id="progress_percentage" class="text-xs font-mono text-slate-400">0%</span>
+            </div>
+            
+            <div class="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden mb-4">
+                <div id="progress_bar" class="bg-gradient-to-r from-indigo-500 to-blue-500 h-1.5 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            
+            <!-- SSE Log Consol -->
+            <div class="bg-slate-950/80 border border-slate-900 rounded-lg p-3 h-28 overflow-y-auto font-mono text-[11px] text-slate-400 flex flex-col gap-1 shadow-inner scrollbar-thin">
+                <div class="text-slate-500">[SYSTEM]: Waiting for backend streaming events...</div>
+                <div id="progress_terminal_log" class="flex flex-col gap-1"></div>
+            </div>
+        </section>
+
+        <!-- Main Workspace Tabs & Display -->
+        <section class="flex flex-col gap-4">
+            <!-- Tab Headers -->
+            <div class="flex border-b border-slate-800/80 gap-6">
+                <button onclick="switchTab('data_overview')" class="tab-btn px-1 py-3 border-b-2 border-indigo-500 text-indigo-400 text-sm font-semibold flex items-center gap-2 transition-all" id="tab_data_overview_btn">
+                    <i data-lucide="layout" class="h-4 w-4"></i> Data Overview
+                </button>
+                <button onclick="switchTab('model_results')" class="tab-btn px-1 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm font-semibold flex items-center gap-2 transition-all" id="tab_model_results_btn">
+                    <i data-lucide="bar-chart-3" class="h-4 w-4"></i> Model Results
+                </button>
+                <button onclick="switchTab('graphs')" class="tab-btn px-1 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm font-semibold flex items-center gap-2 transition-all" id="tab_graphs_btn">
+                    <i data-lucide="image" class="h-4 w-4"></i> Graphs & Plots
+                </button>
+                <button onclick="switchTab('playground')" class="tab-btn px-1 py-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 text-sm font-semibold flex items-center gap-2 transition-all" id="tab_playground_btn">
+                    <i data-lucide="wand2" class="h-4 w-4"></i> Predictor Playground
+                </button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div class="tab-content min-h-[400px]" id="tab_data_overview">
+                <!-- Overview Empty State -->
+                <div id="data_empty_state" class="glass-card rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="database" class="h-12 w-12 text-slate-700 mb-3"></i>
+                    <h3 class="font-semibold text-slate-300 mb-1">No Dataset Loaded</h3>
+                    <p class="text-xs text-slate-500 max-w-sm">Please drag and drop a materials science CSV file or load our sample perovskite dataset to inspect feature stats.</p>
+                </div>
+                
+                <!-- Overview Data Panel -->
+                <div id="data_display_panel" class="hidden flex flex-col gap-6">
+                    <!-- Numbers row -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="glass-card rounded-xl p-4 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                                <i data-lucide="rows" class="h-5 w-5 text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Total Rows</p>
+                                <p id="stat_rows" class="text-xl font-bold font-mono text-slate-100">0</p>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl p-4 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                <i data-lucide="columns" class="h-5 w-5 text-blue-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Total Columns</p>
+                                <p id="stat_cols" class="text-xl font-bold font-mono text-slate-100">0</p>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl p-4 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                                <i data-lucide="alert-triangle" class="h-5 w-5 text-amber-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Missing Cells</p>
+                                <p id="stat_missing" class="text-xl font-bold font-mono text-slate-100">0</p>
+                            </div>
+                        </div>
+                        <div class="glass-card rounded-xl p-4 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                                <i data-lucide="sparkles" class="h-5 w-5 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Domain Features</p>
+                                <p class="text-sm font-semibold text-slate-100">Auto Generated</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- CSV Table Sample -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="font-semibold text-sm text-slate-200 mb-4 flex items-center gap-2">
+                            <i data-lucide="table-properties" class="h-4 w-4 text-indigo-400"></i> Raw CSV Sample Data (First 8 Rows)
+                        </h3>
+                        <div class="overflow-x-auto border border-slate-800/80 rounded-xl scrollbar-thin">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr id="sample_table_header" class="bg-slate-900 border-b border-slate-800 text-slate-400 uppercase font-mono font-semibold">
+                                        <!-- Dynamic Header -->
+                                    </tr>
+                                </thead>
+                                <tbody id="sample_table_body" class="divide-y divide-slate-800/50">
+                                    <!-- Dynamic Body -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden flex flex-col gap-6" id="tab_model_results">
+                <!-- Results Empty State -->
+                <div id="results_empty_state" class="glass-card rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="lock" class="h-12 w-12 text-slate-700 mb-3"></i>
+                    <h3 class="font-semibold text-slate-300 mb-1">Results Locked</h3>
+                    <p class="text-xs text-slate-500 max-w-sm">Please upload a dataset and click the "Run Model Comparison" button. Evaluated model comparisons will populate here.</p>
+                </div>
+                
+                <!-- Results Content -->
+                <div id="results_display_panel" class="hidden flex flex-col gap-6">
+                    <!-- Champion Banner -->
+                    <div id="champion_banner" class="rounded-2xl p-6 glow-emerald flex flex-col md:flex-row items-center justify-between gap-4 border border-emerald-500/20" style="background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.15), rgba(15, 23, 42, 0.6))">
+                        <div class="flex items-center gap-4 text-center md:text-left">
+                            <div class="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30">
+                                <i data-lucide="trophy" class="h-6 w-6 text-emerald-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-emerald-400">Winner: <span id="winner_model_name">XGBoost</span></h3>
+                                <p class="text-xs text-slate-300 mt-0.5">Identified as the optimal model based on validation test evaluations.</p>
+                            </div>
+                        </div>
+                        <div class="bg-emerald-950/40 border border-emerald-900/60 rounded-xl px-4 py-2 text-center">
+                            <p class="text-[10px] text-emerald-400 uppercase font-bold tracking-wider" id="winner_metric_label">Accuracy</p>
+                            <p class="text-2xl font-black font-mono text-emerald-300" id="winner_metric_val">0.0000</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Comparative Table -->
+                    <div class="glass-card rounded-2xl p-6">
+                        <h3 class="font-semibold text-sm text-slate-200 mb-4 flex items-center gap-2">
+                            <i data-lucide="sliders" class="h-4 w-4 text-indigo-400"></i> Detailed Model Metrics Comparison
+                        </h3>
+                        <div class="overflow-x-auto rounded-xl border border-slate-800">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-900 text-slate-400 font-mono uppercase font-semibold border-b border-slate-800">
+                                        <th class="p-3">Model Name</th>
+                                        <th class="p-3" id="table_primary_metric">Accuracy</th>
+                                        <th class="p-3" id="table_secondary_metric_1">Precision</th>
+                                        <th class="p-3" id="table_secondary_metric_2">Recall</th>
+                                        <th class="p-3">Training Time</th>
+                                        <th class="p-3">Inference Time (per Sample)</th>
+                                        <th class="p-3">GA / Hyperparameters</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="metrics_table_body" class="divide-y divide-slate-800/50">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content hidden flex flex-col gap-6" id="tab_graphs">
+                <!-- Graphs Empty State -->
+                <div id="graphs_empty_state" class="glass-card rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="image-off" class="h-12 w-12 text-slate-700 mb-3"></i>
+                    <h3 class="font-semibold text-slate-300 mb-1">No Plot Data</h3>
+                    <p class="text-xs text-slate-500 max-w-sm">Train the model pipeline to compile performance, training curves, confusion heatmaps, and importance plots.</p>
+                </div>
+                
+                <!-- Graphs Grid -->
+                <div id="graphs_display_panel" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">Model Performance Comparison</h4>
+                        <img src="" id="img_perf_comp" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Metric Comparison" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">Training Times (Seconds)</h4>
+                        <img src="" id="img_time_comp" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Training Time Comparison" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">GA-NN Loss Progression</h4>
+                        <img src="" id="img_nn_loss" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Neural Network Loss vs Epochs" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">GA MLP Tuning History</h4>
+                        <img src="" id="img_ga_history" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="GA Tuning curve" />
+                    </div>
+                    
+                    <!-- Classification Confusions / Regression Scatters -->
+                    <div id="task_specific_plot_group_1" class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 id="lbl_plot_1" class="text-xs font-semibold text-slate-300 self-start mb-3">GA-NN Plot</h4>
+                        <img src="" id="img_plot_1" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Model Plot 1" />
+                    </div>
+                    <div id="task_specific_plot_group_2" class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 id="lbl_plot_2" class="text-xs font-semibold text-slate-300 self-start mb-3">XGBoost Plot</h4>
+                        <img src="" id="img_plot_2" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Model Plot 2" />
+                    </div>
+                    <div id="task_specific_plot_group_3" class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 id="lbl_plot_3" class="text-xs font-semibold text-slate-300 self-start mb-3">LightGBM Plot</h4>
+                        <img src="" id="img_plot_3" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="Model Plot 3" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">XGBoost GridSearchCV Tuning Curve</h4>
+                        <img src="" id="img_xgb_tuning" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="XGBoost Tuning Plot" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">XGBoost Feature Importances</h4>
+                        <img src="" id="img_xgb_feat" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="XGBoost Feature Importance" />
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 flex flex-col items-center">
+                        <h4 class="text-xs font-semibold text-slate-300 self-start mb-3">LightGBM Feature Importances</h4>
+                        <img src="" id="img_lgb_feat" class="w-full h-auto rounded-lg border border-slate-800 bg-slate-950/40" alt="LightGBM Feature Importance" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictor Playground -->
+            <div class="tab-content hidden flex flex-col gap-6" id="tab_playground">
+                <!-- Playground Empty State -->
+                <div id="playground_empty_state" class="glass-card rounded-2xl p-16 flex flex-col items-center justify-center text-center">
+                    <i data-lucide="cpu" class="h-12 w-12 text-slate-700 mb-3"></i>
+                    <h3 class="font-semibold text-slate-300 mb-1">Playground Closed</h3>
+                    <p class="text-xs text-slate-500 max-w-sm">Please train the comparison sandbox before entering test values for real-time predictions.</p>
+                </div>
+                
+                <!-- Predictor Panel -->
+                <div id="playground_display_panel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Features Form -->
+                    <div class="glass-card rounded-2xl p-6 lg:col-span-1">
+                        <h3 class="font-semibold text-sm text-slate-200 mb-4 flex items-center gap-2">
+                            <i data-lucide="edit-3" class="h-4 w-4 text-indigo-400"></i> Set Test Compound Features
+                        </h3>
+                        <form id="playground_form" class="flex flex-col gap-3">
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Element A</label>
+                                    <select id="play_element_A" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+                                        <option value="Sr">Sr</option><option value="Ba">Ba</option><option value="Ca">Ca</option>
+                                        <option value="La">La</option><option value="Pb">Pb</option><option value="Na">Na</option>
+                                        <option value="K">K</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Element B</label>
+                                    <select id="play_element_B" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+                                        <option value="Ti">Ti</option><option value="Zr">Zr</option><option value="Mn">Mn</option>
+                                        <option value="Fe">Fe</option><option value="Co">Co</option><option value="Sn">Sn</option>
+                                        <option value="Nb">Nb</option><option value="Ta">Ta</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Element X</label>
+                                    <select id="play_element_X" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none">
+                                        <option value="O">O</option><option value="F">F</option><option value="Cl">Cl</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Effective radius A (Å)</label>
+                                    <input type="number" step="0.001" id="play_r_A" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="1.44" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">radius B (Å)</label>
+                                    <input type="number" step="0.001" id="play_r_B" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="0.605" />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">radius X (Å)</label>
+                                    <input type="number" step="0.001" id="play_r_X" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="1.40" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Electronegativity A</label>
+                                    <input type="number" step="0.01" id="play_en_A" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="0.95" />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Electronegativity B</label>
+                                    <input type="number" step="0.01" id="play_en_B" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="1.54" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Electronegativity X</label>
+                                    <input type="number" step="0.01" id="play_en_X" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="3.44" />
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Temperature (K)</label>
+                                    <input type="number" step="0.1" id="play_temperature_K" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="300.0" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Pressure (GPa)</label>
+                                    <input type="number" step="0.1" id="play_pressure_GPa" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="0.0" />
+                                </div>
+                            </div>
+                            
+                            <!-- Check regression features -->
+                            <div id="play_regression_extra" class="hidden">
+                                <label class="block text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Lattice Parameter (a)</label>
+                                <input type="number" step="0.0001" id="play_lattice_parameter" class="w-full bg-slate-900 border border-slate-800 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none" value="4.0" />
+                            </div>
+                            
+                            <button type="submit" class="w-full mt-4 py-2 bg-indigo-600 hover:bg-indigo-500 font-medium text-xs text-white rounded-lg flex items-center justify-center gap-1.5 transition-colors">
+                                <i data-lucide="sparkles" class="h-4 w-4"></i> Run Playground Inference
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Prediction Results Comparison -->
+                    <div class="lg:col-span-2 flex flex-col gap-6">
+                        <!-- Engineered features list -->
+                        <div class="glass-card rounded-2xl p-6">
+                            <h3 class="font-semibold text-sm text-slate-200 mb-3 flex items-center gap-2">
+                                <i data-lucide="binary" class="h-4 w-4 text-indigo-400"></i> Engineered Physical Domain Features
+                            </h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4" id="engineered_features_playground_display">
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">Goldschmidt t</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_t">-</p>
+                                </div>
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">r_A / r_B Ratio</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_rab">-</p>
+                                </div>
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">r_B / r_X Ratio</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_rbx">-</p>
+                                </div>
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">|EN_A - EN_X|</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_ax">-</p>
+                                </div>
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">|EN_B - EN_X|</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_bx">-</p>
+                                </div>
+                                <div class="bg-slate-950/40 p-2.5 border border-slate-800 rounded-lg">
+                                    <p class="text-[9px] uppercase tracking-wider text-slate-500">|EN_A - EN_B|</p>
+                                    <p class="text-sm font-semibold font-mono text-indigo-300" id="eng_ab">-</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Prediction Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- GA-NN -->
+                            <div class="glass-card rounded-xl p-5 border-l-4 border-indigo-500 flex flex-col justify-between h-40">
+                                <div>
+                                    <h4 class="font-bold text-indigo-400 text-sm">Genetic Algorithm NN</h4>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">Optimized Multi-Layer Perceptron</p>
+                                </div>
+                                <div class="my-4">
+                                    <p class="text-2xl font-black font-mono tracking-tight text-indigo-200" id="pred_ga_nn">N/A</p>
+                                </div>
+                                <span class="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 self-start">PyTorch Model</span>
+                            </div>
+                            
+                            <!-- XGBoost -->
+                            <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500 flex flex-col justify-between h-40">
+                                <div>
+                                    <h4 class="font-bold text-blue-400 text-sm">XGBoost Model</h4>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">Grid Search Tuned Trees</p>
+                                </div>
+                                <div class="my-4">
+                                    <p class="text-2xl font-black font-mono tracking-tight text-blue-200" id="pred_xgboost">N/A</p>
+                                </div>
+                                <span class="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 self-start">Gradient Boost</span>
+                            </div>
+                            
+                            <!-- LightGBM -->
+                            <div class="glass-card rounded-xl p-5 border-l-4 border-emerald-500 flex flex-col justify-between h-40">
+                                <div>
+                                    <h4 class="font-bold text-emerald-400 text-sm">LightGBM Model</h4>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">Grid Search Leaf-Wise Trees</p>
+                                </div>
+                                <div class="my-4">
+                                    <p class="text-2xl font-black font-mono tracking-tight text-emerald-200" id="pred_lightgbm">N/A</p>
+                                </div>
+                                <span class="text-[10px] text-slate-400 bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 self-start">Light Gradient Boost</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-slate-900 px-6 py-4 flex items-center justify-between text-xs text-slate-500">
+        <p>Built with PyTorch, FastAPI & Tailwind CSS</p>
+        <p>&copy; 2026 Advanced Agentic Materials Lab</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+
+        // Element handles
+        const dropZone = document.getElementById('drop_zone');
+        const fileInput = document.getElementById('csv_file_input');
+        const loadSampleBtn = document.getElementById('load_sample_btn');
+        const fileInfoBox = document.getElementById('file_info_box');
+        const infoFilename = document.getElementById('info_filename');
+        const infoStats = document.getElementById('info_stats');
+        const resetFileBtn = document.getElementById('reset_file_btn');
+        
+        const targetColumnSelect = document.getElementById('target_column_select');
+        const taskTypeSelect = document.getElementById('task_type_select');
+        const imbalanceSelect = document.getElementById('imbalance_select');
+        const runModelsBtn = document.getElementById('run_models_btn');
+        
+        const progressSection = document.getElementById('progress_section');
+        const progressMessage = document.getElementById('progress_message');
+        const progressPercentage = document.getElementById('progress_percentage');
+        const progressBar = document.getElementById('progress_bar');
+        const progressTerminalLog = document.getElementById('progress_terminal_log');
+        
+        const downloadReportBtn = document.getElementById('download_report_btn');
+        
+        // Navigation variables
+        let uploadedFileInfo = null;
+        let isTraining = false;
+
+        // Tabs switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-400');
+                btn.classList.add('border-transparent', 'text-slate-400');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Activate current tab button
+            document.getElementById(`tab_${tabId}_btn`).classList.add('border-indigo-500', 'text-indigo-400');
+            document.getElementById(`tab_${tabId}_btn`).classList.remove('border-transparent', 'text-slate-400');
+            
+            // Show current content
+            document.getElementById(`tab_${tabId}`).classList.remove('hidden');
+        }
+
+        // File Selection Handlers
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-indigo-950/10');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-950/10');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-950/10');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleUploadedFile(files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleUploadedFile(e.target.files[0]);
+            }
+        });
+
+        // Load Sample Button
+        loadSampleBtn.addEventListener('click', async () => {
+            try {
+                // We will trigger standard sample loading by doing a fetch from backend if sample CSV is available on local disk, or generate it
+                // Since generate_dataset creates 'perovskite_dataset.csv', we can read it directly from local folder or upload it.
+                // Let's create a virtual File from local server (since we can read static upload)
+                const response = await fetch('/static/plots/../../perovskite_dataset.csv'); // Fallback path if generated at root
+                if (!response.ok) {
+                    throw new Error("Sample file not found. Wait for training generation script or make sure run.py generated it.");
+                }
+                const blob = await response.blob();
+                const file = new File([blob], "perovskite_dataset.csv", { type: "text/csv" });
+                handleUploadedFile(file);
+            } catch (err) {
+                alert("Could not load sample dataset. Please generate it first or drag-and-drop a CSV. Details: " + err.message);
+            }
+        });
+
+        resetFileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            resetFile();
+        });
+
+        function resetFile() {
+            uploadedFileInfo = null;
+            fileInput.value = '';
+            fileInfoBox.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            runModelsBtn.disabled = true;
+            targetColumnSelect.disabled = true;
+            targetColumnSelect.innerHTML = '<option value="">Upload CSV first...</option>';
+            
+            // Empty data panels
+            document.getElementById('data_empty_state').classList.remove('hidden');
+            document.getElementById('data_display_panel').classList.add('hidden');
+        }
+
+        // Handle uploaded CSV
+        async function handleUploadedFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Show loading
+            infoFilename.textContent = "Uploading " + file.name + "...";
+            infoStats.textContent = "Processing column configurations...";
+            fileInfoBox.classList.remove('hidden');
+            dropZone.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Upload failed");
+                }
+                
+                const data = await response.json();
+                uploadedFileInfo = data;
+                
+                // Show statistics
+                infoFilename.textContent = data.filename;
+                infoStats.textContent = `${data.shape[0]} rows × ${data.shape[1]} columns`;
+                
+                // Set targets choices
+                targetColumnSelect.innerHTML = '';
+                targetColumnSelect.disabled = false;
+                
+                // Sort columns: prioritize common target names or crystal structure/lattice parameters
+                const sortedCols = [...data.columns];
+                const preferred = ['crystal_structure', 'lattice_parameter', 'crystal_system'];
+                sortedCols.sort((a,b) => {
+                    const ap = preferred.indexOf(a) !== -1;
+                    const bp = preferred.indexOf(b) !== -1;
+                    if (ap && !bp) return -1;
+                    if (!ap && bp) return 1;
+                    return a.localeCompare(b);
+                });
+                
+                sortedCols.forEach(col => {
+                    const opt = document.createElement('option');
+                    opt.value = col;
+                    opt.textContent = col;
+                    if (col === 'crystal_structure') {
+                        opt.selected = true;
+                    }
+                    targetColumnSelect.appendChild(opt);
+                });
+                
+                // Automatically set task type based on chosen default
+                if (targetColumnSelect.value === 'lattice_parameter') {
+                    taskTypeSelect.value = 'regression';
+                } else {
+                    taskTypeSelect.value = 'classification';
+                }
+                
+                // Trigger view update
+                displayDataOverview(data);
+                
+                // Enable run comparison button
+                runModelsBtn.disabled = false;
+                
+            } catch (err) {
+                alert("Error: " + err.message);
+                resetFile();
+            }
+        }
+
+        // Monitor target column changes to guess task types
+        targetColumnSelect.addEventListener('change', () => {
+            const val = targetColumnSelect.value;
+            if (val.includes('lattice') || val.includes('parameter') || val.includes('radius') || val.includes('temp') || val.includes('pressure')) {
+                taskTypeSelect.value = 'regression';
+            } else {
+                taskTypeSelect.value = 'classification';
+            }
+        });
+
+        // Display sample records & statistics in Data Overview tab
+        function displayDataOverview(data) {
+            document.getElementById('data_empty_state').classList.add('hidden');
+            document.getElementById('data_display_panel').classList.remove('hidden');
+            
+            document.getElementById('stat_rows').textContent = data.shape[0];
+            document.getElementById('stat_cols').textContent = data.shape[1];
+            
+            // Calculate total missing cells
+            let totalMissing = 0;
+            Object.values(data.missing_values).forEach(v => totalMissing += v);
+            document.getElementById('stat_missing').textContent = totalMissing;
+            
+            // Build table header
+            const headerRow = document.getElementById('sample_table_header');
+            headerRow.innerHTML = '';
+            data.columns.forEach(col => {
+                const th = document.createElement('th');
+                th.className = 'p-3 text-left tracking-wider';
+                th.textContent = col;
+                headerRow.appendChild(th);
+            });
+            
+            // Build table body
+            const bodyRow = document.getElementById('sample_table_body');
+            bodyRow.innerHTML = '';
+            data.sample.forEach((row, i) => {
+                const tr = document.createElement('tr');
+                tr.className = i % 2 === 0 ? 'bg-slate-950/20' : 'bg-slate-900/10 hover:bg-slate-900/40 transition-colors';
+                data.columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.className = 'p-3 font-mono text-slate-300';
+                    td.textContent = row[col] !== null ? row[col] : 'NaN';
+                    tr.appendChild(td);
+                });
+                bodyRow.appendChild(tr);
+            });
+            
+            switchTab('data_overview');
+        }
+
+        // Trigger Run Form
+        document.getElementById('config_form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!uploadedFileInfo) return;
+            
+            // Setup UI for run
+            runModelsBtn.disabled = true;
+            runModelsBtn.innerHTML = '<i data-lucide="loader" class="h-4 w-4 animate-spin"></i> Running Training...';
+            progressTerminalLog.innerHTML = '<div class="text-indigo-400">[SYSTEM]: Connecting to server-sent events...</div>';
+            progressSection.classList.remove('hidden');
+            
+            // Reset Results
+            document.getElementById('results_empty_state').classList.remove('hidden');
+            document.getElementById('results_display_panel').classList.add('hidden');
+            document.getElementById('graphs_empty_state').classList.remove('hidden');
+            document.getElementById('graphs_display_panel').classList.add('hidden');
+            document.getElementById('playground_empty_state').classList.remove('hidden');
+            document.getElementById('playground_display_panel').classList.add('hidden');
+            downloadReportBtn.classList.add('hidden');
+            
+            // Post Form
+            const formPayload = new FormData();
+            formPayload.append('target_column', targetColumnSelect.value);
+            formPayload.append('task_type', taskTypeSelect.value);
+            formPayload.append('handle_imbalance', imbalanceSelect.value === 'true');
+            
+            try {
+                const startResponse = await fetch('/train', {
+                    method: 'POST',
+                    body: formPayload
+                });
+                
+                if (!startResponse.ok) {
+                    const err = await startResponse.json();
+                    throw new Error(err.detail || "Could not start training models");
+                }
+                
+                // Initiate SSE Connection
+                isTraining = true;
+                connectSSE();
+                
+            } catch (err) {
+                alert("Error: " + err.message);
+                runModelsBtn.disabled = false;
+                runModelsBtn.innerHTML = '<i data-lucide="play" class="h-4 w-4"></i> Run Model Comparison';
+                progressSection.classList.add('hidden');
+            }
+        });
+
+        // Server Sent Events Progress Connection
+        let sse = null;
+        function connectSSE() {
+            if (sse) sse.close();
+            
+            sse = new EventSource('/stream-progress');
+            
+            sse.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // Update Progress metrics
+                progressMessage.textContent = data.message;
+                progressBar.style.width = data.progress + '%';
+                progressPercentage.textContent = Math.round(data.progress) + '%';
+                
+                // Add console log if changed or new
+                const logDiv = document.createElement('div');
+                logDiv.className = 'flex items-start gap-1 text-slate-300';
+                
+                let timestamp = new Date().toLocaleTimeString();
+                logDiv.innerHTML = `<span class="text-slate-500 font-normal">[${timestamp}]</span> <span>${data.message}</span>`;
+                progressTerminalLog.appendChild(logDiv);
+                progressTerminalLog.parentElement.scrollTop = progressTerminalLog.parentElement.scrollHeight;
+                
+                if (data.status === 'completed') {
+                    sse.close();
+                    isTraining = false;
+                    
+                    // Finalize training UI
+                    runModelsBtn.disabled = false;
+                    runModelsBtn.innerHTML = '<i data-lucide="play" class="h-4 w-4"></i> Run Model Comparison';
+                    
+                    // Load and show results
+                    displayResults(data.results);
+                    
+                    // Load static images with random query string to bypass browser cache
+                    const cacheBuster = "?cb=" + Math.random();
+                    document.getElementById('img_perf_comp').src = "/static/plots/performance_comparison.png" + cacheBuster;
+                    document.getElementById('img_time_comp').src = "/static/plots/time_comparison.png" + cacheBuster;
+                    document.getElementById('img_nn_loss').src = "/static/plots/nn_loss.png" + cacheBuster;
+                    document.getElementById('img_ga_history').src = "/static/plots/ga_tuning.png" + cacheBuster;
+                    document.getElementById('img_xgb_tuning').src = "/static/plots/xgb_tuning.png" + cacheBuster;
+                    document.getElementById('img_xgb_feat').src = "/static/plots/xgb_feat_imp.png" + cacheBuster;
+                    document.getElementById('img_lgb_feat').src = "/static/plots/lgb_feat_imp.png" + cacheBuster;
+                    
+                    // Set up dynamic plots depending on task type
+                    const isClass = data.task_type === 'classification';
+                    document.getElementById('lbl_plot_1').textContent = isClass ? "GA-NN Confusion Matrix" : "GA-NN Predictions Fit";
+                    document.getElementById('img_plot_1').src = (isClass ? "/static/plots/nn_cm.png" : "/static/plots/nn_scatter.png") + cacheBuster;
+                    
+                    document.getElementById('lbl_plot_2').textContent = isClass ? "XGBoost Confusion Matrix" : "XGBoost Predictions Fit";
+                    document.getElementById('img_plot_2').src = (isClass ? "/static/plots/xgb_cm.png" : "/static/plots/xgb_scatter.png") + cacheBuster;
+                    
+                    document.getElementById('lbl_plot_3').textContent = isClass ? "LightGBM Confusion Matrix" : "LightGBM Predictions Fit";
+                    document.getElementById('img_plot_3').src = (isClass ? "/static/plots/lgb_cm.png" : "/static/plots/lgb_scatter.png") + cacheBuster;
+                    
+                    // Display graphs tab
+                    document.getElementById('graphs_empty_state').classList.add('hidden');
+                    document.getElementById('graphs_display_panel').classList.remove('hidden');
+                    
+                    // Load playground
+                    setupPlayground(data.task_type);
+                    
+                    // Enable Download Report
+                    downloadReportBtn.classList.remove('hidden');
+                    downloadReportBtn.onclick = () => window.open('/download-report', '_blank');
+                    
+                    switchTab('model_results');
+                } else if (data.status === 'failed') {
+                    sse.close();
+                    isTraining = false;
+                    runModelsBtn.disabled = false;
+                    runModelsBtn.innerHTML = '<i data-lucide="play" class="h-4 w-4"></i> Run Model Comparison';
+                    alert("Training Failed: " + data.message);
+                }
+            };
+            
+            sse.onerror = (e) => {
+                console.error("SSE Error: ", e);
+                const logDiv = document.createElement('div');
+                logDiv.className = 'text-rose-400 font-bold';
+                logDiv.textContent = "[ERROR]: Lost connection to training updates. Reconnecting...";
+                progressTerminalLog.appendChild(logDiv);
+            };
+        }
+
+        // Render metrics comparison in Model Results tab
+        function displayResults(results) {
+            document.getElementById('results_empty_state').classList.add('hidden');
+            document.getElementById('results_display_panel').classList.remove('hidden');
+            
+            // Set up winner banner
+            document.getElementById('winner_model_name').textContent = results.best_model;
+            const isClass = results.is_classification;
+            
+            document.getElementById('winner_metric_label').textContent = isClass ? "Accuracy Score" : "R² score (Variance Fit)";
+            document.getElementById('winner_metric_val').textContent = results.best_metric_value.toFixed(4);
+            
+            // Setup columns labels
+            document.getElementById('table_primary_metric').textContent = isClass ? "Accuracy" : "R² Score";
+            document.getElementById('table_secondary_metric_1').textContent = isClass ? "Precision (Weighted)" : "RMSE";
+            document.getElementById('table_secondary_metric_2').textContent = isClass ? "Recall (Weighted)" : "MAE";
+            
+            // Build metrics rows
+            const tbody = document.getElementById('metrics_table_body');
+            tbody.innerHTML = '';
+            
+            const models = ['GA-NN', 'XGBoost', 'LightGBM'];
+            models.forEach(name => {
+                const modelData = results.models[name];
+                const tr = document.createElement('tr');
+                const isWinner = (name === results.best_model);
+                
+                tr.className = isWinner 
+                    ? 'bg-emerald-950/20 border-l-4 border-emerald-500/80 hover:bg-emerald-950/30 transition-all font-semibold'
+                    : 'hover:bg-slate-900/30 transition-colors border-l-4 border-transparent';
+                    
+                // Render hyperparameters nicely
+                let paramHtml = '<div class="flex flex-wrap gap-1 max-w-xs">';
+                Object.entries(modelData.best_params).forEach(([k, v]) => {
+                    // Check if array (like neurons)
+                    if (Array.isArray(v)) {
+                        v = `[${v.join(',')}]`;
+                    } else if (typeof v === 'number') {
+                        v = v.toFixed(v < 0.1 ? 5 : 2);
+                    }
+                    paramHtml += `<span class="bg-slate-900 border border-slate-800 text-[10px] text-indigo-300 rounded px-1.5 py-0.5">${k}:${v}</span>`;
+                });
+                paramHtml += '</div>';
+                
+                const val1 = isClass ? modelData.metrics.accuracy : modelData.metrics.r2_score;
+                const val2 = isClass ? modelData.metrics.precision : modelData.metrics.rmse;
+                const val3 = isClass ? modelData.metrics.recall : modelData.metrics.mae;
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-medium flex items-center gap-2">
+                        ${isWinner ? '<i data-lucide="crown" class="h-4 w-4 text-emerald-400"></i>' : ''}
+                        ${name}
+                    </td>
+                    <td class="p-3 font-mono font-bold text-slate-200">${val1.toFixed(4)}</td>
+                    <td class="p-3 font-mono text-slate-400">${val2.toFixed(4)}</td>
+                    <td class="p-3 font-mono text-slate-400">${val3.toFixed(4)}</td>
+                    <td class="p-3 font-mono text-slate-400">${modelData.train_time.toFixed(2)}s</td>
+                    <td class="p-3 font-mono text-slate-400">${modelData.metrics.inference_time_per_sample.toFixed(4)} ms</td>
+                    <td class="p-3">${paramHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+
+        // Initialize playground form with current target column details
+        function setupPlayground(taskType) {
+            document.getElementById('playground_empty_state').classList.add('hidden');
+            document.getElementById('playground_display_panel').classList.remove('hidden');
+            
+            const extraRegInput = document.getElementById('play_regression_extra');
+            if (taskType === 'regression') {
+                // If predicting lattice parameters, we might need crystal structure as input
+                // Show crystal structure classification input or hide extra columns
+                extraRegInput.classList.add('hidden');
+            } else {
+                // If predicting crystal structures, we have lattice parameter as input!
+                extraRegInput.classList.remove('hidden');
+            }
+        }
+
+        // Playground submission prediction
+        document.getElementById('playground_form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const payload = {
+                'element_A': document.getElementById('play_element_A').value,
+                'element_B': document.getElementById('play_element_B').value,
+                'element_X': document.getElementById('play_element_X').value,
+                'r_A': parseFloat(document.getElementById('play_r_A').value),
+                'r_B': parseFloat(document.getElementById('play_r_B').value),
+                'r_X': parseFloat(document.getElementById('play_r_X').value),
+                'electronegativity_A': parseFloat(document.getElementById('play_en_A').value),
+                'electronegativity_B': parseFloat(document.getElementById('play_en_B').value),
+                'electronegativity_X': parseFloat(document.getElementById('play_en_X').value),
+                'temperature_K': parseFloat(document.getElementById('play_temperature_K').value),
+                'pressure_GPa': parseFloat(document.getElementById('play_pressure_GPa').value),
+            };
+            
+            // If classification, we also send lattice_parameter as input
+            const extraRegInput = document.getElementById('play_regression_extra');
+            if (!extraRegInput.classList.contains('hidden')) {
+                payload['lattice_parameter'] = parseFloat(document.getElementById('play_lattice_parameter').value);
+            }
+            
+            try {
+                // Run prediction request
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || "Prediction request failed.");
+                }
+                
+                const res = await response.json();
+                
+                // Populate Predictions
+                const fmtPred = (val) => typeof val === 'number' ? val.toFixed(4) : val;
+                
+                document.getElementById('pred_ga_nn').textContent = fmtPred(res['GA-NN']);
+                document.getElementById('pred_xgboost').textContent = fmtPred(res['XGBoost']);
+                document.getElementById('pred_lightgbm').textContent = fmtPred(res['LightGBM']);
+                
+                // Populate engineered features
+                document.getElementById('eng_t').textContent = res.engineered_features.goldschmidt_tolerance_factor.toFixed(4);
+                document.getElementById('eng_rab').textContent = res.engineered_features.radius_ratio_AB.toFixed(4);
+                document.getElementById('eng_rbx').textContent = res.engineered_features.radius_ratio_BX.toFixed(4);
+                document.getElementById('eng_ax').textContent = res.engineered_features.en_diff_AX.toFixed(4);
+                document.getElementById('eng_bx').textContent = res.engineered_features.en_diff_BX.toFixed(4);
+                document.getElementById('eng_ab').textContent = res.engineered_features.en_diff_AB.toFixed(4);
+                
+            } catch (err) {
+                alert("Prediction Error: " + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

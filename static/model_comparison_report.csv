@@ -1,0 +1,38 @@
+Model,Parameter/Metric,Value
+Summary,Best Performing Model,XGBoost
+Summary,Best Metric Value,0.9313
+
+GA-NN,--- MODEL SUMMARY ---,
+GA-NN,Training Time (s),5.00
+GA-NN,Inference Time per Sample (ms),0.0070
+GA-NN,Hyperparameter: num_layers,2
+GA-NN,Hyperparameter: neurons,"[64, 16]"
+GA-NN,Hyperparameter: lr,0.006223252508624809
+GA-NN,Hyperparameter: dropout,0.047447326303400914
+GA-NN,Accuracy,0.8812
+GA-NN,Precision,0.8826
+GA-NN,Recall,0.8812
+GA-NN,F1-score,0.8778
+
+XGBoost,--- MODEL SUMMARY ---,
+XGBoost,Training Time (s),19.18
+XGBoost,Inference Time per Sample (ms),0.0311
+XGBoost,Hyperparameter: learning_rate,0.2
+XGBoost,Hyperparameter: max_depth,3
+XGBoost,Hyperparameter: n_estimators,100
+XGBoost,Accuracy,0.9313
+XGBoost,Precision,0.9317
+XGBoost,Recall,0.9313
+XGBoost,F1-score,0.9307
+
+LightGBM,--- MODEL SUMMARY ---,
+LightGBM,Training Time (s),14.67
+LightGBM,Inference Time per Sample (ms),0.0360
+LightGBM,Hyperparameter: learning_rate,0.2
+LightGBM,Hyperparameter: max_depth,5
+LightGBM,Hyperparameter: n_estimators,100
+LightGBM,Accuracy,0.9313
+LightGBM,Precision,0.9340
+LightGBM,Recall,0.9313
+LightGBM,F1-score,0.9298
+
